@@ -75,6 +75,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useStore } from 'vuex'
 import GameUnit from './GameUnit.vue'
 import GameBuilding from './GameBuilding.vue'
 
@@ -115,6 +116,7 @@ interface PathNode {
 }
 
 const gameField = ref<HTMLElement | null>(null)
+const store = useStore()
 
 const viewport = reactive({
   width: window.innerWidth,
@@ -146,47 +148,14 @@ for (let row = -30; row <= 30; row++) {
   }
 }
 
-const buildings = reactive<Building[]>([
-  {
-    id: 1,
-    type: 'house',
-    x: 0,
-    y: 0,
-  },
-])
-
-const units = reactive<Unit[]>([
-  {
-    id: 1,
-    type: 'unit',
-    x: -410,
-    y: -320,
-    speed: 120,
-    target: null,
-    path: [],
-  },
-  {
-    id: 2,
-    type: 'unit',
-    x: 410,
-    y: -320,
-    speed: 80,
-    target: null,
-    path: [],
-  },
-  {
-    id: 3,
-    type: 'unit',
-    x: 0,
-    y: 410,
-    speed: 100,
-    target: null,
-    path: [],
-  },
-])
-
-const selectedUnitId = ref<number | null>(null)
-const targetPosition = ref<Position | null>(null)
+const buildings = computed(() => store.state.game.buildings as Building[])
+const units = computed(() => store.state.game.units as Unit[])
+const selectedUnitId = computed(
+  () => store.state.game.selectedUnitId as number | null,
+)
+const targetPosition = computed(
+  () => store.state.game.targetPosition as Position | null,
+)
 const keys = new Set<string>()
 
 let animationFrameId = 0
@@ -211,7 +180,7 @@ const targetStyle = computed(() => {
 })
 
 const selectedUnit = computed(() => {
-  return units.find(unit => unit.id === selectedUnitId.value) ?? null
+  return store.getters['game/selectedUnit'] as Unit | null
 })
 
 function worldToScreenX(worldX: number, worldY: number) {
@@ -239,18 +208,11 @@ function screenToWorld(screenX: number, screenY: number): Position {
 }
 
 function selectUnit(unitId: number) {
-  selectedUnitId.value = unitId
-
-  const unit = units.find(item => item.id === unitId)
-
-  targetPosition.value = unit?.target
-    ? { ...unit.target }
-    : null
+  store.commit('game/selectUnit', unitId)
 }
 
 function handleRightClick() {
-  selectedUnitId.value = null
-  targetPosition.value = null
+  store.commit('game/clearSelection')
 }
 
 function distanceBetween(a: Position, b: Position) {
@@ -317,7 +279,7 @@ function segmentIntersectsBuilding(
 }
 
 function segmentIsClear(start: Position, end: Position) {
-  return buildings.every(building => {
+  return buildings.value.every(building => {
     return !segmentIntersectsBuilding(start, end, building)
   })
 }
@@ -351,13 +313,13 @@ function getEntrancePoint(building: Building): Position {
 }
 
 function isInsideAnyBuilding(position: Position, padding = 0) {
-  return buildings.some(building =>
+  return buildings.value.some(building =>
     pointInsideBuilding(position, building, padding),
   )
 }
 
 function getSafeDestination(position: Position): Position {
-  for (const building of buildings) {
+  for (const building of buildings.value) {
     if (pointInsideBuilding(position, building, UNIT_RADIUS)) {
       return getEntrancePoint(building)
     }
@@ -386,7 +348,7 @@ function findPath(start: Position, destination: Position): Position[] {
     },
   ]
 
-  for (const building of buildings) {
+  for (const building of buildings.value) {
     for (const position of getBuildingWaypoints(building)) {
       if (isInsideAnyBuilding(position, UNIT_RADIUS)) {
         continue
@@ -473,9 +435,11 @@ function moveSelectedUnit(position: Position) {
     return
   }
 
-  unit.target = { ...destination }
-  unit.path = path
-  targetPosition.value = { ...destination }
+  store.commit('game/setUnitOrder', {
+    unitId: unit.id,
+    target: destination,
+    path,
+  })
 }
 
 function handleMouseDown(event: MouseEvent) {
@@ -525,7 +489,7 @@ function updateCamera(deltaTime: number) {
 }
 
 function updateUnits(deltaTime: number) {
-  for (const unit of units) {
+  for (const unit of units.value) {
     if (!unit.target || unit.path.length === 0) {
       continue
     }
@@ -535,44 +499,52 @@ function updateUnits(deltaTime: number) {
     const deltaY = nextPoint.y - unit.y
     const distance = Math.hypot(deltaX, deltaY)
     const movement = unit.speed * deltaTime
+    let x = unit.x
+    let y = unit.y
+    let target = unit.target
+    let path = unit.path
 
     if (distance <= Math.max(movement, 1)) {
       if (!isInsideAnyBuilding(nextPoint, UNIT_RADIUS)) {
-        unit.x = nextPoint.x
-        unit.y = nextPoint.y
+        x = nextPoint.x
+        y = nextPoint.y
       }
 
-      unit.path.shift()
+      path = path.slice(1)
     } else {
       const nextPosition = {
-        x: unit.x + (deltaX / distance) * movement,
-        y: unit.y + (deltaY / distance) * movement,
+        x: x + (deltaX / distance) * movement,
+        y: y + (deltaY / distance) * movement,
       }
 
       const blocked = isInsideAnyBuilding(nextPosition, UNIT_RADIUS)
 
       if (!blocked) {
-        unit.x = nextPosition.x
-        unit.y = nextPosition.y
+        x = nextPosition.x
+        y = nextPosition.y
       } else {
-        unit.path = findPath(
-          { x: unit.x, y: unit.y },
+        path = findPath(
+          { x, y },
           unit.target,
         )
 
-        if (unit.path.length === 0) {
-          unit.target = null
+        if (path.length === 0) {
+          target = null
         }
       }
     }
 
-    if (unit.path.length === 0) {
-      unit.target = null
-
-      if (unit.id === selectedUnitId.value) {
-        targetPosition.value = null
-      }
+    if (path.length === 0) {
+      target = null
     }
+
+    store.commit('game/updateUnitProgress', {
+      unitId: unit.id,
+      x,
+      y,
+      target,
+      path,
+    })
   }
 }
 
@@ -637,12 +609,14 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/tokens' as tokens;
+
 .game-field {
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: #344b32;
+  background: tokens.$color-ground;
   user-select: none;
 }
 
@@ -663,13 +637,13 @@ onBeforeUnmount(() => {
   width: 50px;
   height: 25px;
   transform: translate(-50%, -50%);
-  background: #638b50;
+  background: tokens.$color-grass;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   outline: 1px solid rgba(25, 50, 20, 0.2);
-}
 
-.iso-tile--alt {
-  background: #6b9457;
+  &--alt {
+    background: tokens.$color-grass-alt;
+  }
 }
 
 .origin {
@@ -742,8 +716,8 @@ onBeforeUnmount(() => {
   min-width: 220px;
   padding: 14px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
+  background: tokens.$color-panel;
+  color: tokens.$color-white;
   font-family: Arial, sans-serif;
   font-size: 14px;
   z-index: 10000;

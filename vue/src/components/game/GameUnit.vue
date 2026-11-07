@@ -38,6 +38,8 @@ const unitStyle = computed(() => ({
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/tokens' as tokens;
+
 .unit {
   position: absolute;
   left: 0;
@@ -99,7 +101,7 @@ const unitStyle = computed(() => ({
   bottom: -1px;
   width: 36px;
   height: 16px;
-  border: 2px solid #72ff72;
+  border: 2px solid tokens.$color-selection;
   border-radius: 50%;
   transform: translateX(-50%);
   pointer-events: none;
