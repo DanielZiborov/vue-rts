@@ -1,11 +1,13 @@
 <template>
   <div
-    class="unit"
-    :class="{ selected }"
-    :style="unitStyle"
-    @click.stop="$emit('select')"
+      class="unit"
+      :class="[{ selected }, `unit--group-${groupId}`]"
+      :style="[unitStyle, groupStyle]"
+      v-bind="entityAttributes"
+      @click.stop="$emit('select', $event)"
   >
     <div class="unit-shadow" />
+    <UnitHealthBar :health="health" :max-health="maxHealth" />
 
     <div class="unit-body">
       <div class="unit-head" />
@@ -18,8 +20,17 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import UnitHealthBar from './UnitHealthBar.vue'
+import {
+  getEntityAttributes,
+  getGroupStyle,
+} from './useGroupAppearance'
 
 interface Props {
+  unitId: number
+  groupId: number
+  health: number
+  maxHealth: number
   x: number
   y: number
   selected: boolean
@@ -28,13 +39,21 @@ interface Props {
 const props = defineProps<Props>()
 
 defineEmits<{
-  select: []
+  select: [event: MouseEvent]
 }>()
 
 const unitStyle = computed(() => ({
   left: `${props.x}px`,
   top: `${props.y}px`,
 }))
+
+const groupStyle = computed(() => getGroupStyle(props.groupId))
+
+const entityAttributes = computed(() => getEntityAttributes(
+    'unit',
+    props.unitId,
+    `Группа ${props.groupId} · HP ${Math.ceil(props.health)}`,
+))
 </script>
 
 <style scoped lang="scss">
@@ -49,6 +68,7 @@ const unitStyle = computed(() => ({
   transform: translate(-50%, -75%);
   cursor: pointer;
   z-index: 10;
+  pointer-events: auto;
 }
 
 .unit-shadow {
@@ -89,9 +109,9 @@ const unitStyle = computed(() => ({
   bottom: 0;
   width: 22px;
   height: 25px;
-  border: 1px solid #304b9c;
+  border: 1px solid color-mix(in srgb, var(--group-color), #101010 35%);
   border-radius: 8px 8px 4px 4px;
-  background: #4f7cff;
+  background: var(--group-color);
   transform: translateX(-50%);
 }
 
