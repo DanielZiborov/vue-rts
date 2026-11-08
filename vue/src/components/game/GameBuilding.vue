@@ -1,7 +1,11 @@
 <template>
-  <div class="building" :style="buildingStyle">
-    <div class="building-shadow"></div>
-    <div class="building-base"></div>
+  <div
+    class="building"
+    :class="[{ selected }, `building--group-${groupId}`]"
+    :style="[buildingStyle, groupStyle]"
+    v-bind="entityAttributes"
+    @click.stop="$emit('select')"
+  >
     <div class="building-wall building-wall--left"></div>
     <div class="building-wall building-wall--right"></div>
     <div class="building-door"></div>
@@ -9,23 +13,50 @@
       <div class="roof-left"></div>
       <div class="roof-right"></div>
     </div>
+    <BuildingHealthBar :health="health" :max-health="maxHealth" />
+    <div v-if="selected" class="building-selection" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import BuildingHealthBar from './BuildingHealthBar.vue'
+import {
+  getEntityAttributes,
+  getGroupStyle,
+} from './useGroupAppearance'
 
 interface Props {
+  buildingId: number
+  groupId: number
+  name: string
+  health: number
+  maxHealth: number
+  size: number
+  selected: boolean
   x: number
   y: number
 }
 
 const props = defineProps<Props>()
 
+defineEmits<{
+  select: []
+}>()
+
 const buildingStyle = computed(() => ({
   left: `${props.x}px`,
   top: `${props.y}px`,
+  transform: `translate(-50%, -72%) scale(${props.size / 4.5})`,
 }))
+
+const groupStyle = computed(() => getGroupStyle(props.groupId))
+
+const entityAttributes = computed(() => getEntityAttributes(
+  'building',
+  props.buildingId,
+  `${props.name} · группа ${props.groupId} · HP ${Math.ceil(props.health)}`,
+))
 </script>
 
 <style scoped lang="scss">
@@ -33,35 +64,23 @@ const buildingStyle = computed(() => ({
   position: absolute;
   width: 280px;
   height: 250px;
-  transform: translate(-50%, -72%);
   transform-origin: center;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   z-index: 4;
 }
 
-.building-shadow {
-  position: absolute;
-  left: 50%;
-  top: 137px;
-  width: 250px;
-  height: 125px;
-  background: rgba(0, 0, 0, 0.32);
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  transform: translateX(-50%);
-  z-index: 0;
-}
-
-.building-base {
+.building-selection {
   position: absolute;
   left: 50%;
   top: 125px;
-  width: 230px;
-  height: 115px;
-  background: #78975c;
-  border: 2px solid #435d36;
+  width: 236px;
+  height: 118px;
+  border: 3px solid var(--group-color);
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   transform: translateX(-50%);
-  z-index: 1;
+  pointer-events: none;
+  z-index: 7;
 }
 
 .building-wall {
