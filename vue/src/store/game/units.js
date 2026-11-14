@@ -1,3 +1,5 @@
+import { getUnitStats } from './unitStats'
+
 export const createUnit = (id, groupId, x, y) => ({
   id,
   type: 'unit',
@@ -9,6 +11,8 @@ export const createUnit = (id, groupId, x, y) => ({
   commandQueue: [],
   activeCommand: null,
   speed: 100,
+  ...getUnitStats()
+  
 })
 
 export const findUnit = (state, unitId) =>
