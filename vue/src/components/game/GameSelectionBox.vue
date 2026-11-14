@@ -36,8 +36,16 @@ const box = computed(() => {
 <style scoped lang="scss">
 .selection-box {
   position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  background: rgba(79, 124, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.98);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(79, 124, 255, 0.2),
+      rgba(79, 124, 255, 0.2) 6px,
+      rgba(79, 124, 255, 0.1) 6px,
+      rgba(79, 124, 255, 0.1) 12px
+    );
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25) inset;
   pointer-events: none;
   z-index: 2000;
 }
