@@ -1,30 +1,57 @@
 <template>
-  <div class="building" :style="buildingStyle">
-    <div class="building-shadow"></div>
-    <div class="building-base"></div>
-    <div class="building-wall building-wall--left"></div>
-    <div class="building-wall building-wall--right"></div>
-    <div class="building-door"></div>
+  <div
+    class="building"
+    :class="{ 'building--selected': selected }"
+    :style="buildingStyle"
+    :data-building-id="buildingId"
+    @click.stop="$emit('select', $event)"
+  >
+    <div class="building-shadow" />
+    <div class="building-base" />
+    <div class="building-wall building-wall--left" />
+    <div class="building-wall building-wall--right" />
+    <div class="building-door" />
     <div class="building-roof">
-      <div class="roof-left"></div>
-      <div class="roof-right"></div>
+      <div class="roof-left" />
+      <div class="roof-right" />
     </div>
+
+    <BuildingHealthBar :health="health" :max-health="maxHealth" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import BuildingHealthBar from './BuildingHealthBar.vue'
 
 interface Props {
+  buildingId: number
   x: number
   y: number
+  size?: number
+  selected?: boolean
+  color?: string
+  health?: number
+  maxHealth?: number
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  size: 2,
+  selected: false,
+  color: '#4f7cff',
+  health: undefined,
+  maxHealth: undefined,
+})
+
+defineEmits<{
+  select: [event: MouseEvent]
+}>()
 
 const buildingStyle = computed(() => ({
   left: `${props.x}px`,
   top: `${props.y}px`,
+  '--building-scale': props.size / 2,
+  '--building-color': props.color,
 }))
 </script>
 
@@ -33,10 +60,15 @@ const buildingStyle = computed(() => ({
   position: absolute;
   width: 280px;
   height: 250px;
-  transform: translate(-50%, -72%);
-  transform-origin: center;
-  pointer-events: none;
+  transform: translate(-50%, -72%) scale(var(--building-scale, 1));
+  transform-origin: center bottom;
+  pointer-events: auto;
+  cursor: pointer;
   z-index: 4;
+}
+
+.building--selected {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.95));
 }
 
 .building-shadow {
