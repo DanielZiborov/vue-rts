@@ -1,164 +1,124 @@
 <template>
-  <aside class="game-controls" :class="{ 'game-controls--collapsed': !isExpanded }">
-    <ControlsHeader
-      :active-group="activeGroup"
-      :is-paused="isPaused"
-      :is-expanded="isExpanded"
-      :scenario="scenario"
-      @toggle-pause="togglePause"
-      @toggle-expanded="isExpanded = !isExpanded"
-      @change-scenario="changeScenario"
-    />
+  <div class="game-controls">
+    <div class="game-controls__title">Строительство</div>
 
-    <template v-if="isExpanded">
-      <ControlsGroups />
+    <div class="game-controls__row">
+      <button
+        v-for="(definition, type) in buildingTypes"
+        :key="type"
+        class="game-controls__button"
+        :class="{ 'game-controls__button--active': buildMode === type }"
+        type="button"
+        @click="startBuild(type)"
+      >
+        {{ definition.name }} {{ definition.size }}×{{ definition.size }}
+      </button>
+    </div>
 
-      <ControlsBuild />
-      <ControlsSelectedBuilding />
-      <ControlsSelectedUnits />
+    <div v-if="buildMode" class="game-controls__hint">
+      Выберите свободную клетку на карте.
+      <button
+        class="game-controls__cancel"
+        type="button"
+        @click="cancelBuild"
+      >
+        Отмена
+      </button>
+    </div>
+
+    <div class="game-controls__title game-controls__title--actions">
+      Действия
+    </div>
+
+    <div class="game-controls__row">
       <ControlsSelfDestruct />
-
-      <span v-if="!selectedUnitIds.length && !selectedBuilding">ничего</span>
-
-      <div class="controls-help">
-        ЛКМ — выбрать · Shift+ЛКМ — добавить · рамка — выделить · Shift+клик — очередь команд<br>
-        ПКМ — двигаться / атаковать · Ctrl+1–3 — назначить группу · 1–3 — выбрать группу<br>
-        WASD / стрелки — камера
-      </div>
-    </template>
-  </aside>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useStore } from 'vuex'
-import ControlsBuild from './ControlsBuild.vue'
-import ControlsGroups from './ControlsGroups.vue'
-import ControlsHeader from './ControlsHeader.vue'
-import ControlsSelectedBuilding from './ControlsSelectedBuilding.vue'
-import ControlsSelectedUnits from './ControlsSelectedUnits.vue'
+import { BUILDING_TYPES } from '@/store/game/buildings'
 import ControlsSelfDestruct from './ControlsSelfDestruct.vue'
 
 const store = useStore()
-const isExpanded = ref(window.innerWidth > 700)
-const activeGroup = computed(() => store.state.game.activeGroup as number)
-const isPaused = computed(() => store.state.game.isPaused as boolean)
-const scenario = computed(() => store.state.game.scenario as string)
-const selectedUnitIds = computed(() => store.state.game.selectedUnitIds as number[])
-const selectedBuilding = computed(() => store.getters['game/selectedBuilding'])
 
-function togglePause() {
-  store.commit('events/enqueue', { type: 'pause' })
+const buildingTypes = BUILDING_TYPES
+const buildMode = computed(() => store.state.game.buildMode as string | null)
+
+const startBuild = (type: string) => {
+  store.commit('events/enqueue', {
+    type: 'buildMode',
+    buildingType: buildMode.value === type ? null : type,
+  })
 }
 
-function changeScenario(name: string) {
-  store.commit('events/enqueue', { type: 'scenario', name })
+const cancelBuild = () => {
+  store.commit('events/enqueue', {
+    type: 'buildMode',
+    buildingType: null,
+  })
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/assets/styles/tokens' as tokens;
-
 .game-controls {
   position: absolute;
-  left: 16px;
-  top: 16px;
-  display: grid;
-  gap: 10px;
-  width: min(360px, calc(100vw - 32px));
-  padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(24, 35, 29, 0.94), rgba(8, 15, 11, 0.92));
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-  color: tokens.$color-white;
-  font: 13px/1.45 Arial, sans-serif;
-  backdrop-filter: blur(8px);
-  z-index: 2500;
+  left: 20px;
+  bottom: 20px;
+  width: 360px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(16, 24, 32, 0.92);
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  z-index: 10000;
 }
 
-.game-controls strong {
-  color: #b7ffc1;
-  letter-spacing: 0.02em;
+.game-controls__title {
+  margin-bottom: 8px;
+  font-weight: 700;
+
+  &--actions {
+    margin-top: 12px;
+  }
 }
 
-.controls-row,
-:deep(.controls-row) {
+.game-controls__row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
-
-  button,
-  select {
-    min-height: 28px;
-  }
 }
 
-.game-controls button,
-.game-controls select,
-:deep(.game-controls button),
-:deep(button),
-:deep(select) {
-  padding: 5px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+.game-controls__button {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #f5f8f5;
-  font: inherit;
+  background: #2b3b4b;
+  color: #fff;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
-}
+  font-family: Arial, sans-serif;
 
-:deep(button:hover:not(:disabled)) {
-  border-color: rgba(143, 255, 161, 0.75);
-  background: rgba(143, 255, 161, 0.14);
-}
-
-:deep(select option) {
-  color: #172019;
-}
-
-:deep(.groups button) {
-  flex: 1;
-}
-
-.game-controls--collapsed {
-  width: auto;
-  min-width: 245px;
-}
-
-.controls-section,
-:deep(.controls-section) {
-  display: grid;
-  gap: 5px;
-  padding-top: 7px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.controls-help,
-:deep(.controls-help),
-:deep(small) {
-  color: #d3d9d2;
-  font-size: 11px;
-}
-
-:deep(button.active) {
-  border-color: tokens.$color-selection;
-  background: rgba(114, 255, 114, 0.16);
-}
-
-:deep(button:disabled) {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-@media (max-width: 700px) {
-  .game-controls {
-    left: 8px;
-    top: 8px;
-    max-width: calc(100vw - 16px);
-    padding: 10px;
+  &--active {
+    border-color: #ffffff;
+    background: #3d5f82;
   }
+}
+
+.game-controls__hint {
+  margin-top: 8px;
+  color: #d8e4ef;
+}
+
+.game-controls__cancel {
+  margin-left: 8px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 5px;
+  background: #6c4b4b;
+  color: #fff;
+  cursor: pointer;
 }
 </style>
