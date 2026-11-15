@@ -3,6 +3,11 @@ import { setSelection, clearSelection } from './selection'
 import { orderUnits, startNextCommand } from './commands'
 import { updateAttack } from './combat'
 import { updateMovement } from './movement'
+import {
+  handleBuild,
+  handleBuildMode,
+  handleSelfDestruct,
+} from './buildActions'
 
 const applyEvent = (state, event) => {
   switch (event.type) {
@@ -27,6 +32,15 @@ const applyEvent = (state, event) => {
         },
         event.append,
       )
+      break
+    case 'buildMode':
+      handleBuildMode(state, event)
+      break
+    case 'build':
+      handleBuild(state, event)
+      break
+    case 'selfDestruct':
+      handleSelfDestruct(state, event)
       break
   }
 }
