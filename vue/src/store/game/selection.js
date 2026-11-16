@@ -11,6 +11,15 @@ export const setSelection = (
     ? [...new Set([...state.selectedUnitIds, ...validIds])]
     : validIds
 
+  if (append && validIds.length === 1) {
+    const unitId = validIds[0]
+    const alreadySelected = state.selectedUnitIds.includes(unitId)
+
+    state.selectedUnitIds = alreadySelected
+        ? state.selectedUnitIds.filter((id) => id !== unitId)
+        : [...state.selectedUnitIds, unitId]
+  }
+
   state.selectedBuildingId = buildingId
 
   if (buildingId !== null) {

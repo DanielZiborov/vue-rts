@@ -1,4 +1,5 @@
 import { TILE_SIZE } from './terrain'
+import { getBuildingHealth } from './buildingHealth'
 
 export const BUILDING_TYPES = {
   barracks: {
@@ -15,7 +16,9 @@ export const createBuilding = (id, groupId, type, gridX, gridY) => {
   const definition = BUILDING_TYPES[type] ?? BUILDING_TYPES.barracks
   const centerOffset = (definition.size - 1) / 2
   let health = 100
-
+  
+  health = getBuildingHealth(type)
+  
   return {
     id,
     type,
