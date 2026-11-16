@@ -4,6 +4,7 @@
       class="building-health__fill"
       :style="{ width: `${percent}%` }"
     />
+    <span class="building-health__label">{{ health }} / {{ maxHealth }}</span>
   </div>
 </template>
 
@@ -19,7 +20,6 @@ const props = defineProps<Props>()
 
 const percent = computed(() => {
   if (!props.maxHealth) return 0
-
   return Math.max(0, Math.min(100, (props.health ?? 0) / props.maxHealth * 100))
 })
 </script>
@@ -28,18 +28,31 @@ const percent = computed(() => {
 .building-health {
   position: absolute;
   left: 50%;
-  top: 70px;
+  top: 62px;
   width: 120px;
-  height: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.6);
-  background: rgba(0, 0, 0, 0.45);
+  height: 9px;
+  border: 1px solid rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.5);
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 6;
+  overflow: hidden;
 }
 
 .building-health__fill {
   height: 100%;
   background: #5bd16b;
+}
+
+.building-health__label {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  text-shadow: 0 1px 2px #000;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 </style>
