@@ -3,7 +3,8 @@
     class="unit"
     :class="{ selected }"
     :style="unitStyle"
-    @click.stop="$emit('select')"
+    :data-unit-id="unitId"
+    @click.stop="$emit('select', $event)"
   >
     <div class="unit-shadow" />
 
@@ -12,32 +13,46 @@
       <div class="unit-body-shape" />
     </div>
 
+    <UnitHealthBar :health="health" :max-health="maxHealth" />
+
     <div v-if="selected" class="selection-circle" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import UnitHealthBar from './UnitHealthBar.vue'
 
 interface Props {
+  unitId: number
   x: number
   y: number
   selected: boolean
+  color?: string
+  health?: number
+  maxHealth?: number
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  color: '#4f7cff',
+  health: undefined,
+  maxHealth: undefined,
+})
 
 defineEmits<{
-  select: []
+  select: [event: MouseEvent]
 }>()
 
 const unitStyle = computed(() => ({
   left: `${props.x}px`,
   top: `${props.y}px`,
+  '--unit-color': props.color,
 }))
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/tokens' as tokens;
+
 .unit {
   position: absolute;
   left: 0;
@@ -87,9 +102,9 @@ const unitStyle = computed(() => ({
   bottom: 0;
   width: 22px;
   height: 25px;
-  border: 1px solid #304b9c;
+  border: 1px solid rgba(0, 0, 0, 0.35);
   border-radius: 8px 8px 4px 4px;
-  background: #4f7cff;
+  background: var(--unit-color, #4f7cff);
   transform: translateX(-50%);
 }
 
@@ -99,7 +114,7 @@ const unitStyle = computed(() => ({
   bottom: -1px;
   width: 36px;
   height: 16px;
-  border: 2px solid #72ff72;
+  border: 2px solid tokens.$color-selection;
   border-radius: 50%;
   transform: translateX(-50%);
   pointer-events: none;

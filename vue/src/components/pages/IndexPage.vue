@@ -20,6 +20,8 @@
 </script>
 
 <style scoped lang="scss">
+@use '@/assets/styles/tokens' as tokens;
+
 .page {
   width: 100vw;
   height: 100vh;
@@ -27,7 +29,7 @@
 
   padding: 40px;
 
-  background: #021306;
-  color: white;
+  background: tokens.$color-page;
+  color: tokens.$color-white;
 }
 </style>
