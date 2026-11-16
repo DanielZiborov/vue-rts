@@ -3,6 +3,7 @@ import { setSelection, clearSelection } from './selection'
 import { orderUnits, startNextCommand } from './commands'
 import { updateAttack } from './combat'
 import { updateMovement } from './movement'
+import { handleAssignGroup, handleSelectGroup } from './groups'
 
 const applyEvent = (state, event) => {
   switch (event.type) {
@@ -27,6 +28,25 @@ const applyEvent = (state, event) => {
         },
         event.append,
       )
+      break
+    case 'attack':
+      orderUnits(
+        state,
+        event.unitIds,
+        {
+          type: 'attack',
+          targetType: event.targetType,
+          targetId: event.targetId,
+          destination: event.destination
+        },
+        event.append
+      )
+      break
+    case 'assignGroup':
+      handleAssignGroup(state, event)
+      break
+    case 'selectGroup':
+      handleSelectGroup(state, event)
       break
   }
 }
