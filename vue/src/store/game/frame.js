@@ -4,10 +4,14 @@ import { orderUnits, startNextCommand } from './commands'
 import { updateAttack } from './combat'
 import { updateMovement } from './movement'
 
-
 import { handlePause, handleScenario } from './pauseScenario'
 import { finishIfGameOver } from './gameOver'
-
+import {
+  handleBuild,
+  handleBuildMode,
+  handleSelfDestruct,
+} from './buildActions'
+import { handleAssignGroup, handleSelectGroup } from './groups'
 
 const applyEvent = (state, event) => {
   switch (event.type) {
@@ -33,13 +37,37 @@ const applyEvent = (state, event) => {
         event.append,
       )
       break
-
     case 'pause':
       handlePause(state, event)
       break
-
     case 'scenario':
       handleScenario(state, event)
+    case 'buildMode':
+      handleBuildMode(state, event)
+      break
+    case 'build':
+      handleBuild(state, event)
+      break
+    case 'selfDestruct':
+      handleSelfDestruct(state, event)
+    case 'attack':
+      orderUnits(
+        state,
+        event.unitIds,
+        {
+          type: 'attack',
+          targetType: event.targetType,
+          targetId: event.targetId,
+          destination: event.destination
+        },
+        event.append
+      )
+      break
+    case 'assignGroup':
+      handleAssignGroup(state, event)
+      break
+    case 'selectGroup':
+      handleSelectGroup(state, event)
       break
   }
 }
