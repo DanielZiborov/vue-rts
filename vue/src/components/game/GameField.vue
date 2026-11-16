@@ -59,6 +59,7 @@ import { useGameState } from './useGameState'
 import { useGameLoop } from './useGameLoop'
 import { useSelection } from './useSelection'
 import { useCommands } from './useCommands'
+import { useBuildMode } from './useBuildMode'
 
 interface Position {
   x: number
@@ -143,6 +144,14 @@ const commands = useCommands({
   screenToWorld,
 })
 
+const build = useBuildMode({
+  enqueue,
+  buildMode: computed(() => store.state.game.buildMode),
+  activeGroup: computed(() => store.state.game.activeGroup),
+  gameField,
+  screenToWorld,
+})
+
 const handleMouseDown = (event: MouseEvent) => {
   if (event.button !== 0) return
 
@@ -151,6 +160,8 @@ const handleMouseDown = (event: MouseEvent) => {
   if (target instanceof Element && target.closest('.unit, .building')) {
     return
   }
+
+  if (build.handleBuildClick(event)) return
 
   handleSelectionMouseDown(event)
 }
@@ -161,6 +172,7 @@ const handleMouseUp = (event: MouseEvent) => {
   if (
     moved === false &&
     event.button === 0
+    && !store.state.game.buildMode
   ) {
     commands.handleGroundClick(event, gameField.value, event.shiftKey)
   }
