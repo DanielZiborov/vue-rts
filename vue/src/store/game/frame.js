@@ -4,6 +4,8 @@ import { orderUnits, startNextCommand } from './commands'
 import { updateAttack } from './combat'
 import { updateMovement } from './movement'
 
+import { handlePause, handleScenario } from './pauseScenario'
+import { finishIfGameOver } from './gameOver'
 import {
   handleBuild,
   handleBuildMode,
@@ -35,6 +37,11 @@ const applyEvent = (state, event) => {
         event.append,
       )
       break
+    case 'pause':
+      handlePause(state, event)
+      break
+    case 'scenario':
+      handleScenario(state, event)
     case 'buildMode':
       handleBuildMode(state, event)
       break
@@ -100,6 +107,7 @@ export const applyFrame = (state, { deltaTime, events }) => {
   state.units.slice().forEach((unit) => {
     updateUnit(state, unit, deltaTime)
   })
+  finishIfGameOver(state)
 }
 
 export const advanceFrame = ({ commit, rootState }, deltaTime) => {

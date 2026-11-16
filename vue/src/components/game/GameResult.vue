@@ -1,7 +1,12 @@
 <template>
   <div class="game-result">
     <h2>Игра завершена</h2>
-    <p>Победитель: {{ result?.winner ?? 'ничья' }}</p>
+    <p v-if="result?.winner">
+      Победила группа {{ result.winner }}
+    </p>
+    <p v-else>
+      Ничья: не осталось групп
+    </p>
     <button type="button" @click="$emit('restart', scenario)">
       Начать заново
     </button>
@@ -33,4 +38,16 @@ defineEmits<{
   font-family: Arial, sans-serif;
   z-index: 20000;
 }
+
+
+.game-result button {
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #3d7f4a;
+  color: #fff;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+}
+
 </style>
